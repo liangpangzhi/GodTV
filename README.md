@@ -15,7 +15,7 @@
 ![Next.js](https://img.shields.io/badge/Next.js-16-000?logo=nextdotjs)
 ![TailwindCSS](https://img.shields.io/badge/TailwindCSS-4-38bdf8?logo=tailwindcss)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178c6?logo=typescript)
-![License](https://img.shields.io/badge/License-MIT-green)
+![License](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey)
 ![Docker Ready](https://img.shields.io/badge/Docker-ready-blue?logo=docker)
 
 </div>
@@ -866,7 +866,13 @@ NEXT_PUBLIC_STORAGE_TYPE=redis  # 或 upstash、kvrocks
 
 ## 📄 License
 
-[MIT](LICENSE) © 2025 DecoTV & Contributors
+本项目基于 [DecoTV](https://github.com/Decohererk/DecoTV) 二次开发，遵循其原有授权：
+
+[CC BY-NC-SA 4.0](LICENSE) © DecoTV & Contributors
+
+> 说明：仓库中的 `LICENSE` 文件为 **Attribution-NonCommercial-ShareAlike 4.0 International（署名-非商业性使用-相同方式共享）**，
+> 允许个人学习与二次开发、允许非商业分发，但**商业使用需另行获得授权**。
+> 本仓库中新增的 God TV 定制代码（桌面客户端、飞牛影视接入）同样遵循该许可。
 
 ## 🙏 致谢
 
