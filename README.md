@@ -201,7 +201,7 @@ python scripts/fnos-file-info.py
 快速拉取预构建镜像：
 
 ```bash
-docker pull ghcr.io/decohererk/decotv:latest
+docker pull ghcr.io/liangpangzhi/godtv:latest
 ```
 
 若需在外部主机自行构建后再导入至 OpenWrt，请参考指南中的 “获取或构建镜像” 与 “导出并传输” 步骤。
@@ -219,13 +219,13 @@ DecoTV 提供以下 Docker 镜像标签：
 
 ```bash
 # 方式1：使用 latest 标签（自动获取最新更新）
-docker pull ghcr.io/decohererk/decotv:latest
+docker pull ghcr.io/liangpangzhi/godtv:latest
 
 # 方式2：使用特定版本号（生产环境推荐）
-docker pull ghcr.io/decohererk/decotv:v1.0.0
+docker pull ghcr.io/liangpangzhi/godtv:v1.0.0
 
 # 方式3：回滚到旧版本
-docker pull ghcr.io/decohererk/decotv:v0.9.0
+docker pull ghcr.io/liangpangzhi/godtv:v0.9.0
 ```
 
 **版本号标签优势**：
@@ -258,8 +258,8 @@ DecoTV 会根据请求 URL、`X-Forwarded-Proto`、`X-Forwarded-Host` 或标准 
 ```yml
 services:
   decotv-core:
-    image: ghcr.io/decohererk/decotv:latest # 或使用 :v1.0.0 固定版本
-    container_name: decotv-core
+    image: ghcr.io/liangpangzhi/godtv:latest # 或使用 :v1.0.0 固定版本
+    container_name: godtv-core
     restart: on-failure
     ports:
       - '3000:3000'
@@ -274,7 +274,7 @@ services:
       - decotv-kvrocks
   decotv-kvrocks:
     image: apache/kvrocks
-    container_name: decotv-kvrocks
+    container_name: godtv-kvrocks
     restart: unless-stopped
     volumes:
       - kvrocks-data:/var/lib/kvrocks
@@ -292,8 +292,8 @@ volumes:
 ```yml
 services:
   decotv-core:
-    image: ghcr.io/decohererk/decotv:latest # 或使用 :v1.0.0 固定版本
-    container_name: decotv-core
+    image: ghcr.io/liangpangzhi/godtv:latest # 或使用 :v1.0.0 固定版本
+    container_name: godtv-core
     restart: on-failure
     ports:
       - '3000:3000'
@@ -308,7 +308,7 @@ services:
       - decotv-redis
   decotv-redis:
     image: redis:alpine
-    container_name: decotv-redis
+    container_name: godtv-redis
     restart: unless-stopped
     networks:
       - decotv-network
@@ -329,8 +329,8 @@ networks:
 ```yml
 services:
   decotv-core:
-    image: ghcr.io/decohererk/decotv:latest # 或使用 :v1.0.0 固定版本
-    container_name: decotv-core
+    image: ghcr.io/liangpangzhi/godtv:latest # 或使用 :v1.0.0 固定版本
+    container_name: godtv-core
     restart: on-failure
     ports:
       - '3000:3000'
@@ -350,11 +350,11 @@ services:
 
 ```bash
 docker run -d \
-  --name decotv \
+  --name godtv \
   -p 3000:3000 \
   -v decotv-downloads:/app/.cache/ffmpeg-downloads \
   -e PASSWORD=你的管理密码 \
-  ghcr.io/decohererk/decotv:latest
+  ghcr.io/liangpangzhi/godtv:latest
 ```
 
 #### Docker Compose
@@ -362,8 +362,8 @@ docker run -d \
 ```yml
 services:
   decotv:
-    image: ghcr.io/decohererk/decotv:latest
-    container_name: decotv
+    image: ghcr.io/liangpangzhi/godtv:latest
+    container_name: godtv
     restart: unless-stopped
     ports:
       - '3000:3000'
@@ -392,11 +392,11 @@ volumes:
 
 ```bash
 docker run -d \
-  --name decotv \
+  --name godtv \
   -p 3000:3000 \
   -e NEXT_PUBLIC_AUTH_MODE=public \
   -v decotv-downloads:/app/.cache/ffmpeg-downloads \
-  ghcr.io/decohererk/decotv:latest
+  ghcr.io/liangpangzhi/godtv:latest
 ```
 
 Docker Compose 示例：
@@ -404,8 +404,8 @@ Docker Compose 示例：
 ```yml
 services:
   decotv:
-    image: ghcr.io/decohererk/decotv:latest
-    container_name: decotv
+    image: ghcr.io/liangpangzhi/godtv:latest
+    container_name: godtv
     restart: unless-stopped
     ports:
       - '3000:3000'
@@ -428,7 +428,7 @@ volumes:
 1. **浏览器 Cookie 问题**：尝试清除浏览器 Cookie 后重新登录
 2. **残留数据库配置**：确保没有设置 `REDIS_URL`、`KV_REST_API_URL` 等数据库变量
 3. **反向代理协议头缺失**：如果你通过 Nginx/OpenResty 等反向代理使用 HTTPS，确保正确配置 `X-Forwarded-Proto $scheme`，否则应用可能无法按外部访问协议设置 Cookie
-4. **镜像未更新**：`latest` 镜像重启不会自动拉取新版本，升级前需要先执行 `docker pull ghcr.io/decohererk/decotv:latest`
+4. **镜像未更新**：`latest` 镜像重启不会自动拉取新版本，升级前需要先执行 `docker pull ghcr.io/liangpangzhi/godtv:latest`
 
 **Q: 如何从本地模式迁移到数据库模式？**
 
@@ -720,7 +720,7 @@ VPS Docker 持久化示例：
 ```yml
 services:
   decotv:
-    image: ghcr.io/decohererk/decotv:latest
+    image: ghcr.io/liangpangzhi/godtv:latest
     ports:
       - '3000:3000'
     environment:

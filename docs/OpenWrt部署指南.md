@@ -59,7 +59,7 @@ opkg install docker dockerd luci-app-docker
 优先使用预构建镜像（减少在路由器上构建的复杂度）：
 
 ```bash
-docker pull ghcr.io/decohererk/decotv:latest
+docker pull ghcr.io/liangpangzhi/godtv:latest
 ```
 
 如果需要自行构建（在较好的开发机执行）：
@@ -96,11 +96,11 @@ docker images | grep decotv
 
 ```bash
 docker run -d \
-  --name decotv \
+  --name godtv \
   --restart unless-stopped \
   -p 3000:3000 \
   -e TZ=Asia/Shanghai \
-  ghcr.io/decohererk/decotv:latest
+  ghcr.io/liangpangzhi/godtv:latest
 ```
 
 增强（持久化 + host 网络）：
@@ -108,12 +108,12 @@ docker run -d \
 ```bash
 mkdir -p /mnt/sda1/decotv/data
 docker run -d \
-  --name decotv \
+  --name godtv \
   --restart unless-stopped \
   --net=host \
   -e TZ=Asia/Shanghai \
   -v /mnt/sda1/decotv/data:/app/data \
-  ghcr.io/decohererk/decotv:latest
+  ghcr.io/liangpangzhi/godtv:latest
 ```
 
 > `--net=host` 可避免部分外部源的端口/DNS 问题，不适合公网暴露。
@@ -141,8 +141,8 @@ curl -I http://<OPENWRT_IP>:3000
 version: '3.8'
 services:
   decotv:
-    image: ghcr.io/decohererk/decotv:latest
-    container_name: decotv
+    image: ghcr.io/liangpangzhi/godtv:latest
+    container_name: godtv
     restart: unless-stopped
     ports:
       - '3000:3000'
@@ -191,7 +191,7 @@ tar czf decotv-data-backup.tgz -C /mnt/sda1/decotv/data .
 ## 性能优化建议
 
 1. 使用 `node:20-alpine` 已较轻量。
-2. 限制资源示例：`docker run -d --name decotv --memory=512m --cpus=1 ... ghcr.io/decohererk/decotv:latest`
+2. 限制资源示例：`docker run -d --name godtv --memory=512m --cpus=1 ... ghcr.io/liangpangzhi/godtv:latest`
 3. 开启 Swap 缓解 OOM。
 4. 定期更新镜像保持安全。
 5. 网络慢时调整 DNS 或使用加速。
@@ -225,7 +225,7 @@ tar czf decotv-data-backup.tgz -C /mnt/sda1/decotv/data .
 Docker Run:
 
 ```bash
-docker run -d --name decotv --net=host ...
+docker run -d --name godtv --net=host ...
 ```
 
 Docker Compose:
@@ -289,8 +289,8 @@ docker buildx build --platform linux/arm64 -t decotv:latest . --load
 docker save -o decotv.tar decotv:latest
 scp decotv.tar root@<OPENWRT_IP>:/tmp/
 docker load -i /tmp/decotv.tar
-docker run -d --name decotv -p 3000:3000 --restart unless-stopped -e TZ=Asia/Shanghai decotv:latest
-docker run -d --name decotv --net=host --restart unless-stopped -e TZ=Asia/Shanghai -v /mnt/sda1/decotv/data:/app/data decotv:latest
+docker run -d --name godtv -p 3000:3000 --restart unless-stopped -e TZ=Asia/Shanghai decotv:latest
+docker run -d --name godtv --net=host --restart unless-stopped -e TZ=Asia/Shanghai -v /mnt/sda1/decotv/data:/app/data decotv:latest
 docker logs -f decotv
 docker exec -it decotv sh
 docker stop decotv && docker rm decotv
