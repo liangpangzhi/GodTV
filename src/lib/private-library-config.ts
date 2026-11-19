@@ -7,7 +7,8 @@ export type PrivateLibraryConnectorType =
   | 'openlist'
   | 'emby'
   | 'jellyfin'
-  | 'xiaoya';
+  | 'xiaoya'
+  | 'fnos';
 
 function normalizeUrl(value: string): string {
   return value.trim().replace(/\/+$/, '');
@@ -42,13 +43,16 @@ function getDefaultConnectorName(type: PrivateLibraryConnectorType): string {
       return '我的 Emby';
     case 'jellyfin':
       return '我的 Jellyfin';
+    case 'fnos':
+      return '我的飞牛影视';
     default:
       return '我的影库';
   }
 }
 
 function getDefaultRootPath(type: PrivateLibraryConnectorType): string {
-  return type === 'xiaoya' ? '/' : '/Media';
+  if (type === 'xiaoya' || type === 'fnos') return '/';
+  return '/Media';
 }
 
 export function normalizePrivateLibraryConfig(
@@ -76,7 +80,8 @@ export function normalizePrivateLibraryConfig(
         type !== 'openlist' &&
         type !== 'emby' &&
         type !== 'jellyfin' &&
-        type !== 'xiaoya'
+        type !== 'xiaoya' &&
+        type !== 'fnos'
       ) {
         return null;
       }
@@ -100,6 +105,13 @@ export function normalizePrivateLibraryConfig(
         rootPath: sanitizeString(c.rootPath) || getDefaultRootPath(type),
         userId: sanitizeString(c.userId),
         libraryFilter: sanitizeStringArray(c.libraryFilter),
+        localDecode: c.localDecode !== false,
+        localDecodeMode:
+          c.localDecodeMode === 'direct' ||
+          c.localDecodeMode === 'remux' ||
+          c.localDecodeMode === 'transcode'
+            ? c.localDecodeMode
+            : 'auto',
         createdAt:
           typeof c.createdAt === 'number' && Number.isFinite(c.createdAt)
             ? c.createdAt

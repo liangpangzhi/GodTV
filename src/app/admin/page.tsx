@@ -9057,7 +9057,7 @@ const PanSouConfigComponent = ({
             服务连接
           </h4>
           <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
-            DecoTV 会将 /api/pansou/search 请求转发到此服务节点
+            God TV 会将 /api/pansou/search 请求转发到此服务节点
           </p>
         </div>
 
@@ -9624,7 +9624,8 @@ const PrivateLibraryConfigPanel = ({
                 patchConnector(connector.id, {
                   type: event.target.value as PrivateLibraryConnector['type'],
                   rootPath:
-                    event.target.value === 'xiaoya'
+                    event.target.value === 'xiaoya' ||
+                    event.target.value === 'fnos'
                       ? '/'
                       : connector.rootPath || '/Media',
                 })
@@ -9635,6 +9636,7 @@ const PrivateLibraryConfigPanel = ({
               <option value='xiaoya'>小雅 Alist</option>
               <option value='emby'>Emby</option>
               <option value='jellyfin'>Jellyfin</option>
+              <option value='fnos'>飞牛影视 (fnOS)</option>
             </select>
 
             <input
@@ -9643,7 +9645,7 @@ const PrivateLibraryConfigPanel = ({
               onChange={(event) =>
                 patchConnector(connector.id, { serverUrl: event.target.value })
               }
-              placeholder='服务地址，例如 http://emby.example.com:8096'
+              placeholder='服务地址，例如 http://192.168.1.10:5666（飞牛影视默认 5666）'
               className='md:col-span-2 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900/50 text-sm'
             />
 
@@ -9664,7 +9666,9 @@ const PrivateLibraryConfigPanel = ({
                 ? 'OpenList 可使用 Token，部分部署也可尝试用户名 + 密码；服务地址里直接填写端口。'
                 : connector.type === 'xiaoya'
                   ? '小雅 Alist 兼容 Alist API。可留空密码直接访问；如实例开启了访问密码，服务端会先登录并缓存 token。播放 .strm 文件时会实时刷新阿里云盘直链。'
-                  : 'Emby / Jellyfin 现已支持两种方式：API Key / Access Token，或用户名 + 密码登录。服务地址里直接填写端口，如 http://host:8096。UserId 仅用于播放进度回写，不填会尽量自动解析。'}
+                  : connector.type === 'fnos'
+                    ? '飞牛影视：填写 NAS 地址与端口（默认 http://host:5666），使用用户名 + 密码登录，或填入访问令牌 Token。FN Connect 用户可填 https://<你的FN_ID>.5ddd.com。'
+                    : 'Emby / Jellyfin 现已支持两种方式：API Key / Access Token，或用户名 + 密码登录。服务地址里直接填写端口，如 http://host:8096。UserId 仅用于播放进度回写，不填会尽量自动解析。'}
             </div>
 
             {connector.type === 'xiaoya' ? (

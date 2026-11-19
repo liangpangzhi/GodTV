@@ -1,0 +1,96 @@
+{
+  "name": "godtv-desktop",
+  "version": "1.0.0",
+  "description": "God TV 桌面版 - 免登录家庭影视中心",
+  "main": "main.js",
+  "author": "God TV",
+  "license": "MIT",
+  "scripts": {
+    "dist": "electron-builder --win --x64"
+  },
+  "devDependencies": {
+    "electron": "33.4.11",
+    "electron-builder": "26.18.0"
+  },
+  "build": {
+    "appId": "com.godtv.desktop",
+    "productName": "God TV",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "icon.ico"
+    ],
+    "extraResources": [
+      {
+        "from": "../.next/standalone/",
+        "to": "server",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "../.next/standalone/node_modules/",
+        "to": "server/node_modules",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "../.next/static/",
+        "to": "server/.next/static",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "../public/",
+        "to": "server/public",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "runtime/node.exe",
+        "to": "runtime/node.exe"
+      },
+      {
+        "from": "runtime/ffmpeg/",
+        "to": "runtime/ffmpeg",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "GodTV-${version}-${arch}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "God TV"
+    },
+    "portable": {
+      "artifactName": "GodTV-${version}-portable.exe"
+    },
+    "artifactName": "GodTV-${version}-${arch}.${ext}"
+  }
+}

@@ -136,6 +136,8 @@ function isPublicModeAllowedPath(pathname: string): boolean {
     '/source-browser',
     '/netdisk',
     '/my-library',
+    '/source-manager',
+    '/fnos',
   ];
 
   if (
@@ -166,6 +168,7 @@ function isPublicModeAllowedPath(pathname: string): boolean {
     '/api/private-library',
     '/api/source-browser',
     '/api/danmu-external',
+    '/api/source-manager',
   ];
 
   return publicApis.some((path) => pathname.startsWith(path));

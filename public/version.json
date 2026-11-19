@@ -1,11 +1,11 @@
 {
-  "version": "1.5.0",
-  "timestamp": "20260608222514",
-  "buildTime": "2026-06-08T14:25:14.000Z",
-  "commitSha": "ad0a98b163b2ac2264431d0652f8b900dc66920d",
-  "shortCommit": "ad0a98b",
-  "commitDate": "2026-06-08T21:21:16+08:00",
+  "version": "1.0.0",
+  "timestamp": "20261119225012",
+  "buildTime": "2026-11-19T14:50:12.000Z",
+  "commitSha": "c02a9db1e9d19606c98a884d23610eef8a7c029b",
+  "shortCommit": "c02a9db",
+  "commitDate": "2026-07-16T20:59:38+08:00",
   "ref": "main",
-  "repo": "Decohererk/DecoTV",
+  "repo": "liangpangzhi/GodTV",
   "source": "local"
 }

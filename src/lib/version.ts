@@ -4,14 +4,14 @@
  */
 
 // 版本常量
-const CURRENT_SEMANTIC_VERSION = '1.5.0';
+const CURRENT_SEMANTIC_VERSION = '1.0.0';
 export const CURRENT_VERSION = CURRENT_SEMANTIC_VERSION;
 
 // 硬编码的构建时间戳(每次发布时更新)
 // 这是最后的回退值,确保即使所有文件读取都失败也能有一个基准
-export const BUILD_TIMESTAMP = '20260608222514';
+export const BUILD_TIMESTAMP = '20261119225012';
 
-const DEFAULT_UPDATE_REPO = 'Decohererk/DecoTV';
+const DEFAULT_UPDATE_REPO = 'liangpangzhi/GodTV';
 const UPDATE_REPO = process.env.NEXT_PUBLIC_UPDATE_REPO || DEFAULT_UPDATE_REPO;
 const UPDATE_REF = process.env.NEXT_PUBLIC_UPDATE_REF || 'main';
 const VERSION_TIMESTAMP_REGEX = /^\d{14}$/;
@@ -178,7 +178,7 @@ export async function getCurrentVersionInfo(): Promise<VersionInfo> {
     };
   } catch {
     // 降级处理：使用 VERSION.txt 的默认值
-    const timestamp = '20260608222514';
+    const timestamp = BUILD_TIMESTAMP;
     return {
       version: CURRENT_VERSION,
       timestamp,
@@ -269,7 +269,7 @@ export async function checkForUpdates(currentTimestamp: string): Promise<{
           `构建时间: ${formatVersionTimestamp(remoteTimestamp)}`,
           '点击前往仓库查看更新详情',
         ],
-        downloadUrl: 'https://github.com/Decohererk/DecoTV/releases',
+        downloadUrl: 'https://github.com/liangpangzhi/GodTV/releases',
       };
 
       return {

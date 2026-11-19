@@ -42,7 +42,20 @@ sitemap-*.xml
 
 # temp files
 .tmp/
+.tmp-*/
+*.log
 
 # generated files
 src/lib/runtime.ts
 public/manifest.json
+
+# ===================== 桌面版（Electron）打包工程 =====================
+# 说明：.electron-build/ 内只提交源码与配置，
+# 依赖、运行时二进制与打包产物均不入库（体积过大且可再生成）。
+.electron-build/node_modules/
+.electron-build/dist/
+.electron-build/build/
+.electron-build/_dl/
+.electron-build/runtime/node.exe
+.electron-build/runtime/ffmpeg/ffmpeg.exe
+.electron-build/runtime/ffmpeg/ffprobe.exe

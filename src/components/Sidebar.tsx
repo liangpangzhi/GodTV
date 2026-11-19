@@ -9,6 +9,8 @@ import {
   Menu,
   Radio,
   Search,
+  Server,
+  SlidersHorizontal,
   Star,
   Tv,
 } from 'lucide-react';
@@ -167,6 +169,16 @@ const Sidebar = ({ onToggle, activePath = '/' }: SidebarProps) => {
       icon: Radio,
       label: '直播',
       href: '/live',
+    },
+    {
+      icon: SlidersHorizontal,
+      label: '源管理',
+      href: '/source-manager',
+    },
+    {
+      icon: Server,
+      label: '飞牛影音',
+      href: '/fnos',
     },
   ]);
 

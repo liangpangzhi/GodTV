@@ -49,7 +49,7 @@ const DecoTVFooterCard = () => {
             {/* Logo Section */}
             <div className='mb-8 relative inline-block'>
               <h2 className='text-5xl sm:text-7xl font-black tracking-tighter deco-brand drop-shadow-2xl'>
-                {siteName || 'DecoTV'}
+                {siteName || 'God TV'}
               </h2>
               {/* Reflection/Glow */}
               <div className='absolute -inset-4 bg-gradient-to-r from-purple-500/20 to-blue-500/20 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500'></div>

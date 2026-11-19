@@ -114,7 +114,7 @@ function main() {
   const repo = firstNonEmpty(
     process.env.NEXT_PUBLIC_UPDATE_REPO,
     process.env.GITHUB_REPOSITORY,
-    'Decohererk/DecoTV',
+    'liangpangzhi/GodTV',
   );
 
   const metadata = {

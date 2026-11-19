@@ -78,6 +78,11 @@ function parsePositiveInt(
   fallback: number,
   max: number,
 ): number {
+  // 注意：Number(null) === 0，缺省参数必须单独判断，否则会得到 0 而非 fallback
+  if (value === null || value.trim() === '') {
+    return fallback;
+  }
+
   const parsed = Number(value);
   if (!Number.isFinite(parsed) || parsed < 0) {
     return fallback;

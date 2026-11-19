@@ -9,7 +9,7 @@ import { POSTER_FALLBACK_SRC } from '@/lib/image-url';
 import ExternalImage from '@/components/ExternalImage';
 import PageLayout from '@/components/PageLayout';
 
-type ConnectorType = 'openlist' | 'emby' | 'jellyfin' | 'xiaoya';
+type ConnectorType = 'openlist' | 'emby' | 'jellyfin' | 'xiaoya' | 'fnos';
 
 interface LibraryItem {
   id: string;
@@ -101,6 +101,7 @@ const SOURCE_BADGE_STYLES: Record<ConnectorType, string> = {
   emby: 'border-sky-300/35 bg-sky-500/80 text-sky-50 shadow-[0_8px_24px_-16px_rgba(14,165,233,0.9)]',
   jellyfin:
     'border-sky-300/35 bg-sky-500/80 text-sky-50 shadow-[0_8px_24px_-16px_rgba(14,165,233,0.9)]',
+  fnos: 'border-orange-300/35 bg-orange-500/80 text-orange-50 shadow-[0_8px_24px_-16px_rgba(249,115,22,0.9)]',
 };
 const HERO_PANEL_CLASS =
   'rounded-3xl border border-emerald-200/70 bg-linear-to-r from-white/95 via-emerald-50/80 to-teal-100/70 p-5 shadow-[0_16px_48px_-30px_rgba(16,185,129,0.45)] dark:border-emerald-400/20 dark:from-slate-900/92 dark:via-slate-900/88 dark:to-emerald-950/70 dark:shadow-[0_16px_48px_-30px_rgba(16,185,129,0.55)] sm:p-6';

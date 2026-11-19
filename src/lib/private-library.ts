@@ -6,6 +6,17 @@ import type {
 } from './admin.types';
 import { getConfig } from './config';
 import { db } from './db';
+import {
+  fnBuildPosterUrl,
+  fnGetEpisodes,
+  fnGetSeasons,
+  fnListItemList,
+  fnListMediaDbs,
+  type FnMediaItem,
+  fnReportProgress,
+  fnResolvePlayback,
+  fnTestConnector,
+} from './fnos-client';
 import { normalizePrivateLibraryConfig } from './private-library-config';
 import { getServerCache, setServerCache } from './server-cache';
 import {
@@ -20,7 +31,8 @@ export type PrivateLibraryConnectorType =
   | 'openlist'
   | 'emby'
   | 'jellyfin'
-  | 'xiaoya';
+  | 'xiaoya'
+  | 'fnos';
 
 export interface PrivateLibraryEpisodeItem {
   sourceItemId: string;
@@ -29,6 +41,8 @@ export interface PrivateLibraryEpisodeItem {
   season?: number;
   episode?: number;
   embeddedStreamUrl?: string;
+  /** 单集时长（秒），用于本地解码时显示正确片长 */
+  durationSeconds?: number;
 }
 
 export interface PrivateLibraryItem {
@@ -49,10 +63,14 @@ export interface PrivateLibraryItem {
   genres?: string[];
   libraryName?: string;
   poster?: string;
+  /** 上游（飞牛）图片接口的完整地址，需 token 鉴权，仅供 poster 路由代理使用 */
+  upstreamPoster?: string;
   backdrop?: string;
   originalLanguage?: string;
   tmdbRating?: number;
   runtimeMinutes?: number;
+  /** 媒体时长（秒），来自飞牛条目元数据 */
+  durationSeconds?: number;
   episodeCount?: number;
   seasonCount?: number;
   isAnime?: boolean;
@@ -212,8 +230,8 @@ const PRIVATE_LIBRARY_SCAN_TIMEOUT_MS = 15_000;
 const PRIVATE_LIBRARY_AUTH_CACHE_TTL_SECONDS = 6 * 60 * 60;
 const PRIVATE_LIBRARY_HYDRATE_CACHE_TTL_SECONDS = 6 * 60 * 60;
 const XIAOYA_AUTH_CACHE_TTL_SECONDS = 48 * 60 * 60;
-const PRIVATE_LIBRARY_CLIENT_NAME = 'DecoTV';
-const PRIVATE_LIBRARY_CLIENT_DEVICE = 'DecoTV Web';
+const PRIVATE_LIBRARY_CLIENT_NAME = 'God TV';
+const PRIVATE_LIBRARY_CLIENT_DEVICE = 'God TV Web';
 const PRIVATE_LIBRARY_CLIENT_VERSION = '1.0.0';
 const XIAOYA_MAX_SCAN_DEPTH = 8;
 const MEDIA_FILE_REGEX = /\.(mkv|mp4|m3u8|mov|avi|flv|ts|strm)$/i;
@@ -1765,6 +1783,8 @@ export function getPrivateLibraryConnectorTypeLabel(
       return 'Jellyfin';
     case 'xiaoya':
       return '小雅';
+    case 'fnos':
+      return '飞牛影视';
     default:
       return 'OpenList';
   }
@@ -1806,6 +1826,130 @@ function _buildPrivateLibraryItemId(
   return `${connector.id}:${sourceItemId}`;
 }
 
+/** 扫描飞牛影视媒体库 */
+async function scanFnOS(
+  connector: PrivateLibraryConnector,
+): Promise<PrivateLibraryItem[]> {
+  const scannedAt = Date.now();
+  const items: PrivateLibraryItem[] = [];
+  const libraryFilter = new Set(
+    sanitizeStringArray(connector.libraryFilter).map((item) =>
+      item.toLowerCase(),
+    ),
+  );
+
+  const dbs = await fnListMediaDbs(connector);
+
+  for (const db of dbs) {
+    const dbGuid = sanitizeString(db.guid);
+    if (!dbGuid) continue;
+    const dbTitle = sanitizeString(db.title) || '飞牛影视';
+    if (libraryFilter.size > 0 && !libraryFilter.has(dbTitle.toLowerCase())) {
+      continue;
+    }
+
+    // 分页拉取该媒体库的条目（最多 20 页，避免无限循环）
+    const MAX_PAGES = 20;
+    const PAGE_SIZE = 100;
+    const rawItems: FnMediaItem[] = [];
+    for (let page = 1; page <= MAX_PAGES; page++) {
+      const payload = await fnListItemList(connector, dbGuid, page, PAGE_SIZE);
+      const list = payload.list || [];
+      rawItems.push(...list);
+      if (list.length < PAGE_SIZE) break;
+    }
+
+    for (const entry of rawItems) {
+      const guid = sanitizeString(entry.guid);
+      if (!guid) continue;
+      const title = sanitizeString(entry.title) || guid;
+      const type = sanitizeString(entry.type).toLowerCase();
+      const yearMatch = (
+        entry.release_date ||
+        entry.first_air_date ||
+        ''
+      ).match(/^(\d{4})/);
+      const year = yearMatch ? Number(yearMatch[1]) : undefined;
+      const poster = fnBuildPosterUrl(
+        connector,
+        sanitizeString(entry.poster) || sanitizeString(entry.poster_list?.[0]),
+      );
+      const base = {
+        id: _buildPrivateLibraryItemId(connector, guid),
+        connectorId: connector.id,
+        connectorType: connector.type as PrivateLibraryConnectorType,
+        sourceItemId: guid,
+        title,
+        searchTitle: title,
+        year,
+        mediaType: (type === 'tv' || type === 'show' ? 'tv' : 'movie') as
+          | 'movie'
+          | 'tv',
+        streamPath: guid,
+        overview: sanitizeString(entry.overview),
+        genres: sanitizeStringArray(entry.genres),
+        libraryName: dbTitle,
+        // 飞牛图片接口需 token 鉴权，前端统一走本服务的 poster 代理
+        poster: buildPrivateLibraryPosterUrl(connector.id, guid),
+        upstreamPoster: poster?.url,
+        durationSeconds: Number(entry.duration) || undefined,
+        scannedAt,
+      };
+
+      // 剧集：拉取季与分集，展开为集级别条目
+      if (base.mediaType === 'tv') {
+        try {
+          const seasons = await fnGetSeasons(connector, guid);
+          const episodeItems: PrivateLibraryEpisodeItem[] = [];
+          const seasonGuids = seasons
+            .map((s) => sanitizeString(s.guid))
+            .filter(Boolean);
+          const seasonGuidList = seasonGuids.length ? seasonGuids : [guid];
+          for (const seasonGuid of seasonGuidList) {
+            const episodes = await fnGetEpisodes(connector, seasonGuid);
+            for (const ep of episodes) {
+              const epGuid =
+                sanitizeString(ep.single_child_guid) || sanitizeString(ep.guid);
+              if (!epGuid) continue;
+              const seasonNum = Number(ep.season_number);
+              const episodeNum = Number(ep.episode_number);
+              // sourceItemId 编码: itemGuid::mediaGuid; play/info 会补全 mediaGuid
+              const mediaGuid = sanitizeString(ep.media_guid);
+              const sourceItemId = mediaGuid ? `${guid}::${mediaGuid}` : guid;
+              episodeItems.push({
+                sourceItemId,
+                title:
+                  sanitizeString(ep.title) ||
+                  `${title} S${Number.isFinite(seasonNum) ? seasonNum : ''}E${Number.isFinite(episodeNum) ? episodeNum : ''}`,
+                streamPath: guid,
+                season: Number.isFinite(seasonNum) ? seasonNum : undefined,
+                episode: Number.isFinite(episodeNum) ? episodeNum : undefined,
+                durationSeconds: Number(ep.duration) || undefined,
+              });
+            }
+          }
+          if (episodeItems.length > 0) {
+            items.push({
+              ...base,
+              episodeCount: episodeItems.length,
+              seasonCount: seasonGuidList.length,
+              episodeItems,
+              sortKey: items.length,
+            });
+            continue;
+          }
+        } catch {
+          // 季/集拉取失败时退化为单条目
+        }
+      }
+
+      items.push({ ...base, sortKey: items.length });
+    }
+  }
+
+  return items;
+}
+
 export async function scanConnector(
   connector: PrivateLibraryConnector,
 ): Promise<PrivateLibraryItem[]> {
@@ -1815,6 +1959,8 @@ export async function scanConnector(
     items = await scanOpenList(connector);
   } else if (connector.type === 'xiaoya') {
     items = await scanXiaoya(connector);
+  } else if (connector.type === 'fnos') {
+    items = await scanFnOS(connector);
   } else {
     items = await scanEmbyLike(connector);
   }
@@ -1859,6 +2005,10 @@ export async function testConnector(
     if (connector.type === 'xiaoya') {
       await listAlistPath(connector, connector.rootPath || '/');
       return { ok: true };
+    }
+
+    if (connector.type === 'fnos') {
+      return fnTestConnector(connector);
     }
 
     await withMediaServerAuthRetry(connector, async (auth) => {
@@ -1989,7 +2139,8 @@ export async function resolvePrivateLibraryAudioStreams(
   if (
     !connector ||
     connector.type === 'openlist' ||
-    connector.type === 'xiaoya'
+    connector.type === 'xiaoya' ||
+    connector.type === 'fnos'
   ) {
     return [];
   }
@@ -2083,6 +2234,8 @@ export async function resolveStreamRequest(
   url: string;
   headers?: Record<string, string>;
   canRefreshAuth?: boolean;
+  /** 飞牛 HLS：播放列表内分片为相对路径，需由本服务重写并代理（分片需 token 鉴权） */
+  rewriteHlsUris?: boolean;
 } | null> {
   const cfg = await getPrivateLibraryConfig();
   const connector = cfg.connectors.find(
@@ -2115,6 +2268,16 @@ export async function resolveStreamRequest(
     };
   }
 
+  if (connector.type === 'fnos') {
+    const playback = await fnResolvePlayback(connector, sourceItemId);
+    return {
+      url: playback.url,
+      headers: playback.headers,
+      canRefreshAuth: hasCredentialPair(connector.username, connector.password),
+      rewriteHlsUris: true,
+    };
+  }
+
   const auth = await resolveMediaServerAuth(connector, {
     forceRefresh: options.forceRefreshAuth,
   });
@@ -2135,6 +2298,83 @@ export async function resolveStreamRequest(
   };
 }
 
+/**
+ * 飞牛连接器短期缓存。
+ * 分片/海报是高频请求，而 getConfig() 每次都会对整份配置做序列化与自检，
+ * 因此这里做 30 秒短缓存，避免每个分片请求都重复解析全量配置。
+ */
+const fnosConnectorCache = new Map<
+  string,
+  { connector: PrivateLibraryConnector; expires: number }
+>();
+const FNOS_CONNECTOR_CACHE_TTL_MS = 30_000;
+
+async function getFnOSConnectorCached(
+  connectorId: string,
+): Promise<PrivateLibraryConnector | null> {
+  const cached = fnosConnectorCache.get(connectorId);
+  if (cached && cached.expires > Date.now()) {
+    return cached.connector;
+  }
+
+  const cfg = await getPrivateLibraryConfig();
+  const connector =
+    cfg.connectors.find((item) => item.id === connectorId && item.enabled) ||
+    null;
+  if (connector) {
+    fnosConnectorCache.set(connectorId, {
+      connector,
+      expires: Date.now() + FNOS_CONNECTOR_CACHE_TTL_MS,
+    });
+  }
+  return connector;
+}
+
+/**
+ * 解析飞牛 HLS 分片请求。
+ * 飞牛的 preset.m3u8 内分片为相对路径（如 00000.ts），且分片本身需要 token 鉴权，
+ * 因此由本服务代为取回；同时校验分片地址必须属于该连接器配置的服务地址，避免越权代理。
+ */
+export async function resolveSegmentRequest(
+  connectorId: string,
+  segmentUrl: string,
+): Promise<{ url: string; headers?: Record<string, string> } | null> {
+  const connector = await getFnOSConnectorCached(connectorId);
+  if (!connector || connector.type !== 'fnos') {
+    return null;
+  }
+
+  const target = sanitizeString(segmentUrl);
+  if (!target) return null;
+
+  const baseUrl = connector.serverUrl.replace(/\/+$/, '');
+  const base = new URL(baseUrl);
+  let resolved: URL;
+  try {
+    resolved = new URL(target, base);
+  } catch {
+    return null;
+  }
+  if (resolved.origin !== base.origin) {
+    return null;
+  }
+
+  const auth = await import('./fnos-client').then((m) =>
+    m.resolveAuth(connector),
+  );
+  return {
+    url: resolved.toString(),
+    headers: {
+      Authorization: auth.token,
+      'x-trim-client': 'web',
+      'x-trim-client-version': '616',
+      'User-Agent':
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/143.0.0.0 Safari/537.36',
+      ...(auth.cookie ? { Cookie: auth.cookie } : {}),
+    },
+  };
+}
+
 export async function resolvePosterRequest(
   connectorId: string,
   sourceItemId: string,
@@ -2149,6 +2389,29 @@ export async function resolvePosterRequest(
     connector.type === 'xiaoya'
   ) {
     return null;
+  }
+
+  if (connector.type === 'fnos') {
+    // 飞牛海报在扫描时已存为图片接口完整 URL，需要带 token 鉴权由 poster 路由代理。
+    const cached = getConnectorCachedItems(connector.id).find(
+      (item) => item.sourceItemId === sourceItemId,
+    );
+    const posterUrl = sanitizeString(cached?.upstreamPoster || cached?.poster);
+    if (!posterUrl || posterUrl.startsWith('/api/')) return null;
+    const auth = await import('./fnos-client').then((m) =>
+      m.resolveAuth(connector),
+    );
+    return {
+      url: posterUrl,
+      headers: {
+        Authorization: auth.token,
+        'x-trim-client': 'web',
+        'x-trim-client-version': '616',
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/143.0.0.0 Safari/537.36',
+        ...(auth.cookie ? { Cookie: auth.cookie } : {}),
+      },
+    };
   }
 
   const auth = await resolveMediaServerAuth(connector);
@@ -2206,6 +2469,24 @@ export async function reportPrivateLibraryProgress(
 
   if (connector.type === 'openlist' || connector.type === 'xiaoya') {
     return { ok: true, synced: false };
+  }
+
+  if (connector.type === 'fnos') {
+    try {
+      // positionTicks 是 100ns 单位，飞牛用秒
+      await fnReportProgress(
+        connector,
+        payload.sourceItemId,
+        Math.floor(payload.positionTicks / 10_000_000),
+      );
+      return { ok: true, synced: true };
+    } catch (error) {
+      return {
+        ok: true,
+        synced: false,
+        detail: error instanceof Error ? error.message : String(error),
+      };
+    }
   }
 
   const auth = await resolveMediaServerAuth(connector);

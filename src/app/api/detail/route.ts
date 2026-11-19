@@ -95,12 +95,27 @@ export async function GET(request: NextRequest) {
                 {
                   sourceItemId: hydratedTarget.sourceItemId,
                   title: hydratedTarget.title,
+                  durationSeconds: hydratedTarget.durationSeconds,
                 },
               ];
-        const streamUrls = privateEpisodes.map(
-          (episode) =>
-            `/api/private-library/stream?connectorId=${encodeURIComponent(hydratedTarget.connectorId)}&sourceItemId=${encodeURIComponent(episode.sourceItemId)}`,
-        );
+        // 飞牛影视播放地址：
+        //  - localDecode=true（默认）：取原片在客户端本地解码，绕开 NAS 转码；
+        //  - 否则：由 NAS 转码为 HLS，需要显式标记 type=hls 供播放器识别。
+        const useLocalDecode =
+          connector.type === 'fnos' && connector.localDecode !== false;
+        const localMode = connector.localDecodeMode || 'auto';
+        const streamUrls = privateEpisodes.map((episode) => {
+          if (!useLocalDecode) {
+            return `/api/private-library/stream?connectorId=${encodeURIComponent(hydratedTarget.connectorId)}&sourceItemId=${encodeURIComponent(episode.sourceItemId)}&type=hls`;
+          }
+          // 带上真实时长：本地解码是边转边播，播放器拿不到准确片长，
+          // 需要用元数据时长修正进度条
+          const duration =
+            episode.durationSeconds || hydratedTarget.durationSeconds;
+          const durationQuery =
+            duration && duration > 0 ? `&duration=${Math.round(duration)}` : '';
+          return `/api/private-library/local-stream?connectorId=${encodeURIComponent(hydratedTarget.connectorId)}&sourceItemId=${encodeURIComponent(episode.sourceItemId)}&mode=${encodeURIComponent(localMode)}${durationQuery}`;
+        });
         let privateAudioStreams: Awaited<
           ReturnType<typeof resolvePrivateLibraryAudioStreams>
         > = [];

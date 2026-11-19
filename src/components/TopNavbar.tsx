@@ -13,6 +13,8 @@ import {
   Library,
   Radio,
   Search,
+  Server,
+  SlidersHorizontal,
   Tv,
 } from 'lucide-react';
 import { usePathname, useSearchParams } from 'next/navigation';
@@ -126,6 +128,24 @@ const BASE_NAV_ITEMS: NavItem[] = [
     href: '/live',
     icon: Radio,
     label: '\u76f4\u64ad',
+    chip: 'chip-live',
+    type: 'exact',
+    openInNewTab: false,
+  },
+  {
+    key: 'source-manager',
+    href: '/source-manager',
+    icon: SlidersHorizontal,
+    label: '\u6e90\u7ba1\u7406',
+    chip: 'chip-live',
+    type: 'exact',
+    openInNewTab: false,
+  },
+  {
+    key: 'fnos',
+    href: '/fnos',
+    icon: Server,
+    label: '\u98de\u725b',
     chip: 'chip-live',
     type: 'exact',
     openInNewTab: false,
@@ -315,7 +335,7 @@ function TopNavbar() {
                 className='shrink-0 select-none hover:opacity-90 transition-opacity'
               >
                 <span className='text-xl font-black tracking-tight deco-brand'>
-                  {siteName || 'DecoTV'}
+                  {siteName || 'God TV'}
                 </span>
               </FastLink>
             </div>
@@ -334,7 +354,7 @@ function TopNavbar() {
 
               <div
                 ref={navScrollRef}
-                className={`flex items-center gap-2 overflow-x-auto px-2 py-0.5 scroll-smooth whitespace-nowrap [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden ${
+                className={`flex items-center gap-1.5 overflow-x-auto px-2 py-0.5 scroll-smooth whitespace-nowrap [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden ${
                   isNavOverflowing ? 'justify-start' : 'justify-center'
                 }`}
               >
@@ -361,7 +381,7 @@ function TopNavbar() {
                       }
                       target={openInNewTab ? '_blank' : undefined}
                       rel={openInNewTab ? 'noopener noreferrer' : undefined}
-                      className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] lg:gap-2 lg:px-4 lg:text-sm hover:opacity-90 transition-all glass-chip chip-glow chip-theme ${item.chip} ${
+                      className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[13px] hover:opacity-90 transition-all glass-chip chip-glow chip-theme ${item.chip} ${
                         active ? activeRingClass : ''
                       }`}
                     >

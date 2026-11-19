@@ -9,6 +9,7 @@ import {
   Library,
   Radio,
   Search,
+  Server,
   Star,
   Tv,
 } from 'lucide-react';
@@ -128,6 +129,14 @@ const MobileBottomNav = ({ activePath }: MobileBottomNavProps) => {
       activeTextColor: 'text-white',
       hoverBg: 'hover:bg-red-500/20',
     },
+    {
+      icon: Server,
+      label: '飞牛',
+      href: '/fnos',
+      activeGradient: 'bg-linear-to-r from-orange-500 to-amber-500',
+      activeTextColor: 'text-white',
+      hoverBg: 'hover:bg-orange-500/20',
+    },
   ]);
 
   // 动态添加自定义分类
@@ -197,6 +206,7 @@ const MobileBottomNav = ({ activePath }: MobileBottomNavProps) => {
 
       // 直播页特殊处理
       if (href === '/live' && decodedActive.startsWith('/live')) return true;
+      if (href === '/fnos' && decodedActive.startsWith('/fnos')) return true;
 
       // 我的影库特殊处理
       if (href === '/my-library' && decodedActive.startsWith('/my-library')) {

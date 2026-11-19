@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
 
   return NextResponse.json(
     {
-      server: 'DecoTV',
+      server: 'God TV',
       version: CURRENT_VERSION,
       siteName: config.SiteConfig.SiteName,
       status: 'online',

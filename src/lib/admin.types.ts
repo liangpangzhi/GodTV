@@ -22,7 +22,7 @@ export interface PrivateLibraryConnector {
   id: string;
   name: string;
   displayName?: string;
-  type: 'openlist' | 'emby' | 'jellyfin' | 'xiaoya';
+  type: 'openlist' | 'emby' | 'jellyfin' | 'xiaoya' | 'fnos';
   enabled: boolean;
   serverUrl: string;
   token: string;
@@ -32,6 +32,10 @@ export interface PrivateLibraryConnector {
   rootPath?: string;
   userId?: string;
   libraryFilter?: string[];
+  /** 飞牛影视：本地解码播放（取原片在客户端解码，避开 NAS 转码） */
+  localDecode?: boolean;
+  /** 飞牛影视：本地解码模式 auto=自动 direct=直连原片 remux=本地转封装 transcode=本地转码 */
+  localDecodeMode?: 'auto' | 'direct' | 'remux' | 'transcode';
   createdAt: number;
   updatedAt: number;
 }

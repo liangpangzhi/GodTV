@@ -65,7 +65,7 @@ function toTvboxVod(result: SearchResult) {
     vod_content: result.desc || '',
     type_name: result.type_name || '',
     vod_play_from: playUrl
-      ? result.source_name || result.source || 'DecoTV'
+      ? result.source_name || result.source || 'God TV'
       : '',
     vod_play_url: playUrl,
   };

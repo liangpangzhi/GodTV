@@ -4,6 +4,11 @@ import { db } from '@/lib/db';
 
 import { AdminConfig, SearchResultLoadMode } from './admin.types';
 import { getDefaultPanSouConfig, normalizePanSouConfig } from './pansou';
+import {
+  getPresetLives,
+  getPresetSources,
+  PRESET_CONFIG_FILE,
+} from './preset-config';
 import { normalizePrivateLibraryConfig } from './private-library-config';
 
 export interface ApiSite {
@@ -278,17 +283,20 @@ async function getInitConfig(
     LastCheck: '',
   },
 ): Promise<AdminConfig> {
+  // 未提供配置文件时，回落到构建时注入的预置源配置
+  const effectiveConfigFile =
+    configFile && configFile.trim() ? configFile : PRESET_CONFIG_FILE;
   let cfgFile: ConfigFileStruct;
   try {
-    cfgFile = JSON.parse(configFile) as ConfigFileStruct;
+    cfgFile = JSON.parse(effectiveConfigFile) as ConfigFileStruct;
   } catch {
     cfgFile = {} as ConfigFileStruct;
   }
   const adminConfig: AdminConfig = {
-    ConfigFile: configFile,
+    ConfigFile: effectiveConfigFile,
     ConfigSubscribtion: subConfig,
     SiteConfig: {
-      SiteName: process.env.NEXT_PUBLIC_SITE_NAME || 'DecoTV',
+      SiteName: process.env.NEXT_PUBLIC_SITE_NAME || 'God TV',
       Announcement:
         process.env.ANNOUNCEMENT ||
         '本网站仅提供影视信息搜索服务，所有内容均来自第三方网站。本站不存储任何视频资源，不对任何内容的准确性、合法性、完整性负责。',
@@ -401,6 +409,14 @@ async function getInitConfig(
     });
   });
 
+  // 若解析后仍无源（例如配置文件为空或部分缺失），回落到预置源
+  if (adminConfig.SourceConfig.length === 0) {
+    adminConfig.SourceConfig = getPresetSources();
+  }
+  if (!adminConfig.LiveConfig || adminConfig.LiveConfig.length === 0) {
+    adminConfig.LiveConfig = getPresetLives();
+  }
+
   return adminConfig;
 }
 
@@ -410,14 +426,14 @@ async function getInitConfig(
  */
 export function getLocalModeConfig(): AdminConfig {
   const adminConfig: AdminConfig = {
-    ConfigFile: '',
+    ConfigFile: PRESET_CONFIG_FILE,
     ConfigSubscribtion: {
       URL: '',
       AutoUpdate: false,
       LastCheck: '',
     },
     SiteConfig: {
-      SiteName: process.env.NEXT_PUBLIC_SITE_NAME || 'DecoTV',
+      SiteName: process.env.NEXT_PUBLIC_SITE_NAME || 'God TV',
       Announcement:
         process.env.ANNOUNCEMENT ||
         '本网站仅提供影视信息搜索服务，所有内容均来自第三方网站。本站不存储任何视频资源，不对任何内容的准确性、合法性、完整性负责。',
@@ -452,9 +468,9 @@ export function getLocalModeConfig(): AdminConfig {
         },
       ],
     },
-    SourceConfig: [],
+    SourceConfig: getPresetSources(),
     CustomCategories: [],
-    LiveConfig: [],
+    LiveConfig: getPresetLives(),
     PanSouConfig: getDefaultPanSouConfig(),
     TMDBConfig: {
       ApiKey: process.env.TMDB_API_KEY || '',

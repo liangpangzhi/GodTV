@@ -248,6 +248,42 @@ function parseM3U(
 
   let tvgUrl = '';
   let channelIndex = 0;
+
+  // 检测格式：TVBox 纯文本订阅使用「频道名,URL」+「#genre#」分组标记，
+  // 标准 m3u 使用 #EXTINF + URL 两行结构。
+  const isTvboxText =
+    !m3uContent.includes('#EXTINF') &&
+    lines.some((line) => line.includes('#genre#'));
+
+  if (isTvboxText) {
+    let group = '无分组';
+    for (const line of lines) {
+      // 分组标记：如「央视频道,#genre#」
+      const genreMatch = line.match(/^(.*?),?#genre#\s*$/i);
+      if (genreMatch) {
+        const g = (genreMatch[1] || '').trim();
+        if (g) group = g;
+        continue;
+      }
+      // 频道行：如「CCTV1,http://...m3u8」，取最后一个逗号分隔的 URL
+      const commaIdx = line.lastIndexOf(',');
+      if (commaIdx < 0) continue;
+      const name = line.slice(0, commaIdx).trim();
+      const url = line.slice(commaIdx + 1).trim();
+      if (!name || !/^https?:\/\//i.test(url)) continue;
+      channels.push({
+        id: `${sourceKey}-${channelIndex}`,
+        tvgId: name,
+        name,
+        logo: '',
+        group,
+        url,
+      });
+      channelIndex++;
+    }
+    return { tvgUrl, channels };
+  }
+
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
 

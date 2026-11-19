@@ -1,12 +1,14 @@
 <!-- markdownlint-disable MD033 MD026 MD034 -->
 
 <h1 align="center">
-  <img src="public/logo.png" alt="DecoTV Logo" width="160" style="margin-bottom: 12px;" />
+  <img src="public/logo.png" alt="God TV Logo" width="160" style="margin-bottom: 12px;" />
   <br />
-  DecoTV
+  God TV
 </h1>
 
-> 🎬 **DecoTV** 是一个开箱即用的、跨平台的影视聚合播放器。它基于 **Next.js 16** + **Tailwind&nbsp;CSS 4** + **TypeScript 5** 构建，支持多资源搜索、在线播放、收藏同步、播放记录、云端存储，让你可以随时随地畅享海量免费影视内容。**支持本地无数据库模式、CMS 全量代理、隐私纵深防御等企业级特性。**
+> 🎬 **God TV** 是一个开箱即用的、跨平台的影视聚合播放器。它基于 **Next.js 16** + **Tailwind&nbsp;CSS 4** + **TypeScript 5** 构建，支持多资源搜索、在线播放、收藏同步、播放记录、云端存储，让你可以随时随地畅享海量免费影视内容。**支持本地无数据库模式、CMS 全量代理、隐私纵深防御等企业级特性。**
+>
+> 本仓库是 [DecoTV](https://github.com/Decohererk/DecoTV) 的定制发行版 **God TV**，在此基础上新增了 **Windows 桌面客户端** 与 **飞牛影视（fnOS）私人影库接入**。
 
 <div align="center">
 
@@ -83,6 +85,8 @@
 
 - [🎬 项目展示](#-项目展示)
 - [✨ 功能特性](#-功能特性)
+- [🖥️ Windows 桌面客户端](#️-windows-桌面客户端)
+- [🐟 飞牛影视（fnOS）接入](#-飞牛影视fnos接入)
 - [🛠 技术栈](#-技术栈)
 - [🚀 部署](#-部署)
 - [⚙️ 配置文件](#️-配置文件)
@@ -97,16 +101,92 @@
 - [📈 Star History](#-star-history)
 - [💝 赞赏支持](#-赞赏支持)
 
+## 🖥️ Windows 桌面客户端
+
+God TV 提供免安装的 Windows 桌面版（基于 Electron），把服务端与界面打包进单个 exe，
+无需部署 Docker、无需配置数据库，双击即用。
+
+### 下载
+
+前往 [Releases](https://github.com/liangpangzhi/GodTV/releases) 下载：
+
+| 文件                        | 说明                                               |
+| --------------------------- | -------------------------------------------------- |
+| `GodTV-<版本>-x64.exe`      | 安装版，可选择安装目录、创建桌面与开始菜单快捷方式 |
+| `GodTV-<版本>-portable.exe` | 便携版，解压即用                                   |
+
+> exe 未做代码签名，Windows SmartScreen 可能提示「未知发布者」，选择「更多信息 → 仍要运行」即可。
+
+### 特性
+
+- **免登录家庭模式**：内置 `NEXT_PUBLIC_AUTH_MODE=public` 与本地存储，开箱即用，无需配置数据库。
+- **自动选端口**：从 3000 起向后探测空闲端口，避免与 NAS 上已运行的 3000 端口冲突。
+- **内置运行时**：自带独立 Node.js 与 ffmpeg，服务端与本地解码无需另外安装。
+- **持久化密钥**：自动在用户数据目录生成并保存 `AUTH_SECRET`，保证 m3u8 分片签名校验长期有效。
+
+### 从源码构建
+
+```bash
+# 1. 安装依赖
+pnpm install
+
+# 2. 准备运行时（node.exe + ffmpeg.exe，体积较大故不入库，脚本会自动下载）
+pnpm desktop:runtime
+
+# 3. 构建服务端 standalone 产物
+pnpm desktop:build
+
+# 4. 打包 exe（输出到 .electron-build/dist/）
+pnpm desktop:dist
+```
+
+## 🐟 飞牛影视（fnOS）接入
+
+God TV 支持把 **飞牛影视（fnOS Video）** 作为私人影库接入。
+
+### 快速配置
+
+1. 打开应用左侧的 `飞牛影音` 入口（或访问 `/fnos` 页面）。
+2. 填写飞牛影视的服务地址（形如 `http://192.168.1.10:5666`）、账号与密码。
+3. 先测试连接，再保存；随后扫描影视库，扫描完成后前台会出现「我的影库」入口。
+
+### 本地解码（可选但推荐）
+
+飞牛影视的影片多为 MKV/TS + AC3/DTS 音轨，浏览器无法直接解码。开启「本地解码」后：
+
+- 本机使用内置 ffmpeg 将原片**实时转封装**为分片 MP4（`-c:v copy`，不重新编码，几乎不占 CPU），
+  由本机解码播放；
+- 支持**边转边播**，长时间播放不会中断；
+- 转封装完成后，后台自动转换为 faststart 普通 MP4，之后再次观看可秒开并任意拖动定位；
+- 缓存位于 `<LocalAppData>\GodTV\media-cache\`，上限 24GB，超出自动清理旧文件。
+
+> ⚠️ 本地解码需要把整部影片落到本机磁盘（体积约等于原片大小）。空间不足时程序会明确提示，
+> 此时请清理磁盘或改用 NAS 转码模式。
+
+### 开发调试脚本
+
+`scripts/fnos-*.py` 是飞牛 API 的联调脚本（逆向实现参考 [FlyNarwhal](https://github.com/FNOSP/FlyNarwhal)）。
+运行前需设置环境变量：
+
+```bash
+export FNOS_BASE=http://192.168.1.10:5666
+export FNOS_USERNAME=你的账号
+export FNOS_PASSWORD=你的密码
+python scripts/fnos-file-info.py
+```
+
 ## 🛠 技术栈
 
-| 分类      | 主要依赖                                                                                              |
-| --------- | ----------------------------------------------------------------------------------------------------- |
-| 前端框架  | [Next.js 16](https://nextjs.org/) · App Router · Turbopack                                            |
-| UI & 样式 | [Tailwind&nbsp;CSS 4](https://tailwindcss.com/)                                                       |
-| 语言      | TypeScript 5                                                                                          |
-| 播放器    | [ArtPlayer](https://github.com/zhw2590582/ArtPlayer) · [HLS.js](https://github.com/video-dev/hls.js/) |
-| 代码质量  | ESLint 9 · Prettier 3 · Jest 29                                                                       |
-| 部署      | Docker                                                                                                |
+| 分类       | 主要依赖                                                                                              |
+| ---------- | ----------------------------------------------------------------------------------------------------- |
+| 前端框架   | [Next.js 16](https://nextjs.org/) · App Router · Turbopack                                            |
+| UI & 样式  | [Tailwind&nbsp;CSS 4](https://tailwindcss.com/)                                                       |
+| 语言       | TypeScript 5                                                                                          |
+| 播放器     | [ArtPlayer](https://github.com/zhw2590582/ArtPlayer) · [HLS.js](https://github.com/video-dev/hls.js/) |
+| 桌面客户端 | [Electron 33](https://www.electronjs.org/) · electron-builder 26                                      |
+| 本地解码   | ffmpeg（实时转封装 / faststart 转换）                                                                 |
+| 代码质量   | ESLint 9 · Prettier 3 · Jest 29                                                                       |
+| 部署       | Docker                                                                                                |
 
 ## 🚀 部署
 

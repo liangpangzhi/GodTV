@@ -78,7 +78,7 @@ export async function GET() {
         </div>
         
         <div class="mt-8 text-center text-sm text-gray-500">
-            <p>Powered by DecoTV &copy; ${new Date().getFullYear()}</p>
+            <p>Powered by God TV &copy; ${new Date().getFullYear()}</p>
         </div>
     </div>
 

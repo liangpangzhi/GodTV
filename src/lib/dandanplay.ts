@@ -19,7 +19,7 @@ export function getDandanplayCredentials(): DandanplayCredentials {
 }
 
 /**
- * Non-Docker web deployments use the maintainer-operated DecoTV instance as a
+ * Non-Docker web deployments use the maintainer-operated God TV instance as a
  * relay. The published Docker image sets DOCKER_ENV=true and does not use it
  * implicitly, because public image usage should not consume the maintainer's
  * Vercel Hobby quota.
@@ -97,7 +97,7 @@ export function buildDandanplayHeaders(
 ): Record<string, string> {
   const headers: Record<string, string> = {
     Accept: 'application/json',
-    'User-Agent': 'DecoTV/1.4',
+    'User-Agent': 'God TV/1.4',
   };
 
   if (!appId || !appSecret) return headers;

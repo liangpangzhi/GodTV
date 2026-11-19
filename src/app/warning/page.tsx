@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: '安全警告 - DecoTV',
+  title: '安全警告 - God TV',
   description: '站点安全配置警告',
 };
 

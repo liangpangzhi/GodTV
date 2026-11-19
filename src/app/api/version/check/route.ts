@@ -17,7 +17,7 @@ import {
 export const dynamic = 'force-dynamic';
 
 // 远程版本源配置
-const UPDATE_REPO = process.env.NEXT_PUBLIC_UPDATE_REPO || 'Decohererk/DecoTV';
+const UPDATE_REPO = process.env.NEXT_PUBLIC_UPDATE_REPO || 'liangpangzhi/GodTV';
 const UPDATE_REF = process.env.NEXT_PUBLIC_UPDATE_REF || 'main';
 
 // 多个镜像源
@@ -80,7 +80,7 @@ async function fetchWithTimeout(
       signal: controller.signal,
       cache: 'no-store',
       headers: {
-        'User-Agent': 'DecoTV-VersionCheck/1.0',
+        'User-Agent': 'God TV-VersionCheck/1.0',
         Accept: accept,
       },
     });

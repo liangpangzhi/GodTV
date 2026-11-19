@@ -293,7 +293,7 @@ async function searchFromManagedRelay(request: Request) {
       },
       data: {
         code: 502,
-        message: formatSearchErrorMessage('DecoTV 托管弹幕中继请求失败', err),
+        message: formatSearchErrorMessage('God TV 托管弹幕中继请求失败', err),
         source: 'managed-relay',
         animes: [],
       },
@@ -432,7 +432,7 @@ export async function GET(request: Request) {
     return NextResponse.json(
       {
         code: 503,
-        message: 'DecoTV 托管弹幕中继已暂停服务',
+        message: 'God TV 托管弹幕中继已暂停服务',
         source: 'managed-relay',
         keyword,
         animes: [],

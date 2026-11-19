@@ -11,7 +11,7 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
-    version: '1.5.0',
+    version: '1.0.0',
     date: '2026-06-08',
     added: [
       '🏠 免登录家庭模式: 支持 NEXT_PUBLIC_AUTH_MODE=public，前台页面和常用 API 可免登录访问，后台默认仍受保护',
