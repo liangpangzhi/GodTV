@@ -169,6 +169,9 @@ function isPublicModeAllowedPath(pathname: string): boolean {
     '/api/source-browser',
     '/api/danmu-external',
     '/api/source-manager',
+    // 下载功能：桌面版与家庭模式以 public 模式运行，缺少该项会导致
+    // /api/download/* 被重定向到 /warning，前端 fetch 拿到 HTML 后解析失败
+    '/api/download',
   ];
 
   return publicApis.some((path) => pathname.startsWith(path));

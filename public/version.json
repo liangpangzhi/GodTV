@@ -1,10 +1,10 @@
 {
-  "version": "1.0.0",
-  "timestamp": "20261119225012",
-  "buildTime": "2026-11-19T14:50:12.000Z",
-  "commitSha": "c02a9db1e9d19606c98a884d23610eef8a7c029b",
-  "shortCommit": "c02a9db",
-  "commitDate": "2026-07-16T20:59:38+08:00",
+  "version": "1.0.1",
+  "timestamp": "20261120123046",
+  "buildTime": "2026-11-20T04:30:46.000Z",
+  "commitSha": "5a3dacbfb74d4a6479f829b41b7f88195285c3de",
+  "shortCommit": "5a3dacb",
+  "commitDate": "2026-11-20T12:12:22+08:00",
   "ref": "main",
   "repo": "liangpangzhi/GodTV",
   "source": "local"

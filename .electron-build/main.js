@@ -77,6 +77,27 @@ function resolveAuthSecret() {
 }
 
 /**
+ * 下载输出目录。
+ * 服务端默认写入 process.cwd()/.cache/ffmpeg-downloads，而桌面版 cwd 是
+ * <安装目录>/resources/server（Program Files 下，普通用户不可写），
+ * 会导致所有下载在创建目录时失败。这里指向一个必定可写的用户目录。
+ */
+function resolveDownloadDir() {
+  try {
+    const base = process.env.LOCALAPPDATA || app.getPath('userData');
+    const dir = path.join(base, 'GodTV', 'downloads');
+    fs.mkdirSync(dir, { recursive: true });
+    return dir;
+  } catch (error) {
+    const fallback = path.join(app.getPath('temp'), 'GodTV-downloads');
+    try {
+      fs.mkdirSync(fallback, { recursive: true });
+    } catch (e) {}
+    return fallback;
+  }
+}
+
+/**
  * 解析服务端运行目录。
  * 打包后 standalone 位于 resources/server，node.exe 位于 resources/runtime。
  */
@@ -100,6 +121,26 @@ function startServer() {
 
   const nodeBin = fs.existsSync(nodeExe) ? nodeExe : process.execPath;
 
+  // 内置 ffmpeg：下载（/api/download/ffmpeg）只认 FFMPEG_PATH 环境变量，
+  // 不设置就会退化成 PATH 里的 "ffmpeg"，在未装 ffmpeg 的机器上必然 ENOENT。
+  const ffmpegExe = path.join(
+    path.dirname(nodeExe),
+    'ffmpeg',
+    process.platform === 'win32' ? 'ffmpeg.exe' : 'ffmpeg',
+  );
+  const ffmpegPath = fs.existsSync(ffmpegExe) ? ffmpegExe : '';
+  if (!ffmpegPath) {
+    console.warn('[God TV] 未找到内置 ffmpeg:', ffmpegExe);
+  }
+
+  // ffprobe 用于下载任务的时长探测（缺失只影响进度百分比）
+  const ffprobeExe = path.join(
+    path.dirname(nodeExe),
+    'ffmpeg',
+    process.platform === 'win32' ? 'ffprobe.exe' : 'ffprobe',
+  );
+  const ffprobePath = fs.existsSync(ffprobeExe) ? ffprobeExe : '';
+
   // 关键：使用干净的环境变量启动服务。
   // 继承宿主机全部环境变量（如 ELECTRON_RUN_AS_NODE、各类代理变量）会干扰初始化。
   const cleanEnv = {
@@ -118,7 +159,16 @@ function startServer() {
     // 免登录家庭模式 + 本地存储；预置源已编译进 standalone
     NEXT_PUBLIC_AUTH_MODE: 'public',
     NEXT_PUBLIC_STORAGE_TYPE: 'localstorage',
+    // 下载输出目录：安装目录不可写，必须重定向到用户目录
+    FFMPEG_DOWNLOAD_DIR: resolveDownloadDir(),
   };
+
+  if (ffmpegPath) {
+    cleanEnv.FFMPEG_PATH = ffmpegPath;
+  }
+  if (ffprobePath) {
+    cleanEnv.FFPROBE_PATH = ffprobePath;
+  }
 
   console.log('[God TV] 启动服务:', nodeBin, serverScript);
   serverProcess = spawn(nodeBin, [serverScript], {

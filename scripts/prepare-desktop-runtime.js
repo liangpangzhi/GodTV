@@ -126,38 +126,48 @@ async function prepareNode() {
 
 async function prepareFfmpeg() {
   const destination = path.join(ffmpegDir, 'ffmpeg.exe');
+  const probeDestination = path.join(ffmpegDir, 'ffprobe.exe');
   if (fs.existsSync(destination)) {
     console.log('✓ ffmpeg.exe 已存在，跳过');
     return;
   }
-  console.log('→ 准备 ffmpeg（用于飞牛本地解码）…');
+  console.log('→ 准备 ffmpeg（下载/转封装/飞牛本地解码）…');
   fs.mkdirSync(ffmpegDir, { recursive: true });
 
-  // 优先使用 ffmpeg-static（自动挑选镜像，含 Windows 版本）
-  if (!process.env.GODTV_FFMPEG_URL) {
-    try {
-      require.resolve('ffmpeg-static');
-      const staticPath = require('ffmpeg-static');
-      fs.copyFileSync(staticPath, destination);
-      console.log('✓ ffmpeg.exe 就绪（来自 ffmpeg-static）');
-      return;
-    } catch {
-      console.log('  未安装 ffmpeg-static，改用直接下载');
-    }
-  }
-
+  // 注意：ffmpeg-static 附带的是 2018 年的 4.x 构建，其 gnutls 不支持 TLS 1.3，
+  // 拉取 https 流会直接崩溃（0xC0000374）。因此优先下载最新构建，仅在失败时回退。
   const url =
     process.env.GODTV_FFMPEG_URL ||
     'https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip';
-  const zipPath = path.join(os.tmpdir(), 'ffmpeg-win64.zip');
-  await download(url, zipPath);
-  extractFromZip(
-    zipPath,
-    'ffmpeg-master-latest-win64-gpl/bin/ffmpeg.exe',
-    destination,
-  );
-  fs.rmSync(zipPath, { force: true });
-  console.log('✓ ffmpeg.exe 就绪');
+  const zipPath = process.env.GODTV_FFMPEG_ZIP || path.join(os.tmpdir(), 'ffmpeg-win64.zip');
+
+  try {
+    if (!process.env.GODTV_FFMPEG_ZIP) {
+      await download(url, zipPath);
+    }
+    const prefix = 'ffmpeg-master-latest-win64-gpl/bin/';
+    extractFromZip(zipPath, `${prefix}ffmpeg.exe`, destination);
+    try {
+      extractFromZip(zipPath, `${prefix}ffprobe.exe`, probeDestination);
+      console.log('✓ ffprobe.exe 就绪（用于下载进度百分比）');
+    } catch (error) {
+      console.log('  ffprobe.exe 提取失败（仅影响进度显示）:', error.message);
+    }
+    if (!process.env.GODTV_FFMPEG_ZIP) fs.rmSync(zipPath, { force: true });
+    console.log('✓ ffmpeg.exe 就绪（最新构建，支持 TLS 1.3）');
+    return;
+  } catch (error) {
+    console.log('  下载失败，回退到 ffmpeg-static:', error.message);
+  }
+
+  try {
+    require.resolve('ffmpeg-static');
+    const staticPath = require('ffmpeg-static');
+    fs.copyFileSync(staticPath, destination);
+    console.log('✓ ffmpeg.exe 就绪（来自 ffmpeg-static，旧版，可能无法拉取 https 流）');
+  } catch {
+    throw new Error('无法获取 ffmpeg：下载失败且未安装 ffmpeg-static');
+  }
 }
 
 async function main() {
