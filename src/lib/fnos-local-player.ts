@@ -46,6 +46,12 @@ export interface LocalMediaSource {
 export function resolveFfmpegPath(): string | null {
   const candidates: string[] = [];
 
+  // Android TV 版：ffmpeg 作为 native library 安装，路径由外壳通过环境变量传入
+  const androidFfmpeg = process.env.GODTV_ANDROID_FFMPEG;
+  if (androidFfmpeg) {
+    candidates.push(androidFfmpeg);
+  }
+
   const execName = process.platform === 'win32' ? 'ffmpeg.exe' : 'ffmpeg';
   // 打包后：<resources>/server/server.js → <resources>/runtime/ffmpeg/ffmpeg.exe
   candidates.push(

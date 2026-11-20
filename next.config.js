@@ -33,6 +33,9 @@ const nextConfig = {
 
   // 图片优化配置
   images: {
+    // Android TV 版使用内置服务端，bionic libc 不兼容 sharp 的 glibc 原生模块，
+    // 因此在该平台关闭服务端图片优化，由浏览器直接加载原图。
+    unoptimized: process.env.GODTV_ANDROID === '1',
     // NOTE: 移除 unoptimized: true 以启用 Next.js 图片优化
     // 如果部署到不支持图片优化的平台，可重新启用
     remotePatterns: [
